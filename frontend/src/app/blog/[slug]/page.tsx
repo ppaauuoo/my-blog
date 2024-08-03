@@ -1,8 +1,10 @@
+import BackButton from "@/components/BackButton";
 import {
   BlocksRenderer,
   type BlocksContent,
 } from "@strapi/blocks-react-renderer";
 import Link from "next/link";
+
 interface Blog {
   id: number;
   attributes: {
@@ -13,8 +15,8 @@ interface Blog {
   };
 }
 
-const fetchData = async () => {
-  const url = "http://127.0.0.1:1337/api/blogs";
+const fetchData = async (slug: string) => {
+  const url = `http://127.0.0.1:1337/api/blogs/${slug}`;
   const token =
     "bearer 054bd1f2a91e55d3169adfd0fb2d51f80f64f4888c7156b70a937c81a673d64ea5eb4caf6cc2426254333dd7acf085ebdf2764f0ef52fcc806235d2dcff03e18a19878947dfb0e461e2ec699213a24a9d61ca3a63f3e536c3dec0b3518e0f7dfc2834cbe7f12019cc21e331b6f4c1cca107488a3d23ab60b543a2d8dca9de463";
 
@@ -37,31 +39,32 @@ const fetchData = async () => {
   }
 };
 
-const loadBlogs = (data: Blog[]) =>
-  data.map((item: Blog) => (
-    <li key={item.id} className="blog-post">
-      <h3><Link href={`/blog/${item.id}`}>{item.attributes.title}</Link></h3>
-      <p>{item.attributes.desc}</p>
-      <p>{item.attributes.date}</p>
-    </li>
-  ));
+const loadBlog = (item: Blog) => (
+  <>
+    <h3>{item.attributes.title}</h3>
+    <p>{item.attributes.desc}</p>
+    {item.attributes.body && <BlocksRenderer content={item.attributes.body} />}
+    <p>{item.attributes.date}</p>
+  </>
+);
 
-export default async function Blog() {
-  const data = await fetchData();
-
+export default async function Blog({ params }: { params: { slug: string } }) {
+  const data = await fetchData(params.slug);
+  console.log(data);
   return (
-    <main className="prose lg:prose-xl flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="p-4">
-        <h2 className="text-2xl font-bold">Blog</h2>
-        {data.length > 0 ? (
-          <>
-            <p>Check out my latest blog posts:</p>
-            <ul className="list-disc pl-4">{loadBlogs(data)}</ul>
-          </>
-        ) : (
-          <p>Error 404 : Data not found.</p>
-        )}
-      </div>
-    </main>
+    <>
+      <main className="prose lg:prose-xl flex min-h-screen flex-col items-center justify-between p-24">
+        <div className="p-4">
+          {data ? (
+            <>{loadBlog(data)}</>
+          ) : (
+            <>
+              <p>Error 404 : Data not found.</p>
+            </>
+          )}
+          <BackButton />
+        </div>
+      </main>
+    </>
   );
 }
